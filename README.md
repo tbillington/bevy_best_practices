@@ -11,6 +11,7 @@ Up to date as of Bevy 0.11.
   - [Update systems should be bounded](#update-systems-should-be-bounded)
   - [Co-locate system registration for the same `State`](#co-locate-system-registration-for-the-same-state)
 - [Events](#events)
+  - [Prefer Events for structuring logic and systems](#prefer-events-for-structuring-logic-and-systems)
   - [Explicit ordering](#explicit-ordering)
   - [Explicit event handling system run criteria](#explicit-event-handling-system-run-criteria)
 - [Helpers](#helpers)
