@@ -69,7 +69,7 @@ _There can be exceptions to this, for example you may have background music or U
 
 ### Co-locate system registration for the same `State`
 
-State transitions should have `setup` and `cleanup` specific systems. Their `OnEnter` and `OnExit` registration should co-located.
+State transitions should have `setup` and `cleanup` specific systems. Their `OnEnter` and `OnExit` registration should be co-located.
 
 This means it's easy to see the setup systems and that it has a cleanup system to run.
 
@@ -87,7 +87,7 @@ Use [Events](https://docs.rs/bevy/latest/bevy/ecs/event/index.html) to structure
 
 Events allow different parts of your game to opt-in to information they need, and prevents tight coupling.
 
-`EventWriters` and `EventReaders` are implemented as a [thin layer](https://docs.rs/bevy_ecs/0.11.0/src/bevy_ecs/event.rs.html#558-569) over a vanilla `Vec` so they're cheap to use, and subsequent `send`s will re-use the allocated capacity. Systems that read from the same event can also run in parallel as an `EventReader` is local to the system.
+`EventWriters` and `EventReaders` are implemented as a [thin layer](https://docs.rs/bevy_ecs/0.11.0/src/bevy_ecs/event.rs.html#558-569) over a vanilla `Vec` so they're cheap to use, and subsequent `send`s will re-use the allocated capacity. Systems that read from the same event can also run in parallel as `EventReader`s are local to the system.
 
 Here's an example of one way you might structure a projectile hitting an enemy, all the way to audio, visual effects, and achievements being updated. You should evaluate the use of events on a case by case basis, as they're not free, and for simple local operations it can be enough to mutate within the same system.
 
