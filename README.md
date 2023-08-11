@@ -302,7 +302,7 @@ pub(crate) struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(some_physics_library::BouncyPhysicsPlugin)
-            .init_resource::<MyPhisicsSettings>()
+            .init_resource::<MyPhysicsSettings>()
             .add_systems(...);
     }
 }
