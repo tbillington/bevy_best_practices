@@ -20,6 +20,12 @@ Up to date as of Bevy 0.11.
 - [Project Structuring](#project-structuring)
   - [Prelude](#prelude)
   - [Plugins](#plugins)
+- [Builds](#builds)
+  - [Development](#development)
+  - [Release](#release)
+  - [Distribution](#distribution)
+- [License](#license)
+  - [Your contributions](#your-contributions)
 
 ## Entities
 
@@ -330,6 +336,83 @@ fn main() {
         .run();
 }
 ```
+
+## Builds
+
+Bevy does not yet provide it's own build system, so we get the default Rust profiles of `dev` and `release`. While these profiles are a decent starting point, they're conservative and need to cater to a wide set of circumstances.
+
+If you're following the [Bevy getting started guide](https://bevyengine.org/learn/quick-start/getting-started/setup/#compile-with-performance-optimizations) you'll already have encountered some of what we'll be doing.
+
+Some of the build commands will require extra flags which can be annoying to type and easy to forget. I recommend some small layer infront of them. Anything would work here including batch files, shell scripts, makefiles, or something like [`just`](https://github.com/casey/just) which is my preference.
+
+The default Rust linker is often a significant portion of compile times. If you're using Bevys `dynamic_linking` described in the Development section this shouldn't be a big deal, however much faster linkers exist that you can experiment with such as LLD or mold. They are mentioned in the Bevy [getting started guide](https://bevyengine.org/learn/quick-start/getting-started/setup/#enable-fast-compiles-optional).
+
+### Development
+
+Here are the settings I use for the fastest iteration build times. If you require more performance in debug mode you can try the suggestions in the code snippet. I've generally found going above `opt-level = 2` doesn't give a meaningful increase for the compile time cost.
+
+```toml
+[profile.dev]
+debug = 0
+strip = "debuginfo"
+opt-level = 0 # Switch to 1 for more runtime performance
+# overflow-checks = false # Uncomment for better math performance
+
+[profile.dev.package."*"]
+opt-level = 2
+```
+
+We disable certain debug information as it increases compile & link times. We are still able to get stack traces even with them disabled. You can always re-enable them if you have a specific need.
+
+You'll also want to be using Bevy's [`dynamic_linking` feature](https://bevyengine.org/learn/quick-start/getting-started/setup/#enable-fast-compiles-optional) eg `cargo run -F bevy/dynamic_linking`. Dynamic linking allows us to avoid paying the cost of linking all of Bevy and it's dependencies every time we compile.
+
+### Release
+
+Our release profile doesn't look much different. `release` comes with `opt-level = 3` by default but we'll specify it for clarity. We'll continue with removing debug info as we did in `dev`.
+
+```toml
+[profile.release]
+opt-level = 3
+panic = 'abort'
+debug = 0
+strip = "debuginfo"
+# lto = "thin" # Enable for more inlining with a bigger tradeoff in compile times
+```
+
+The main changes from `dev` are the optimisation level, aborting on panics, and no longer using the Bevy `dynamic_linking` feature. We don't need [unwinding on panics](https://doc.rust-lang.org/cargo/reference/profiles.html#panic) as Rust favours tools like `Result` and being able to match and handle errors gracefully. Disabling unwinding reduces how much code is generated leading to better performance, more inlining opportunities, and smaller builds.
+
+For a little more potential speed you can try ["thin" link time optimisation](https://doc.rust-lang.org/cargo/reference/profiles.html#lto), though I've found the increase in interative compile times not worth it.
+
+
+### Distribution
+
+Our distribution profile will be what we ship to players. We create it by specifying that it inherits from our `release` profile, then we'll tune a few more options.
+
+```toml
+[profile.distribution]
+inherits = "release"
+strip = true
+lto = "thin"
+codegen-units = 1
+```
+
+`strip = true` will remove even more debug information, shrinking the size of the binary while making stack traces much less useful.
+
+`lto = "thin` is a given here, allowing for inlining opportunities across your games code and all your dependencies. You absolutely do not want Bevy `dynamic_linking` enabled for distribution builds as it prevents propper LTO. There is also another lto option called "fat" however I would discourage it's use. It is constrained to a single core and will dramatically increase compile times while often having no benefit over thin.
+
+By default rustc will split crates into a number of "code generation units" to allow for parallel compilation within each crate. `codegen_units = 1` disables this feature, leading to generally faster code with longer compile times per crate.
+
+Lastly, we will disable the logging capabilities of our build. End users will never see or need this information. Because it increases the size of the build, slows compile times, and hurts performance it's a good option unless you have very specific needs.
+
+Unfortunately it's not as easy as any of the previous options. You will need to add the `tracing` and `log` to your Cargo project and ensure they're the same versions being used by Bevy. Make sure there isn't multiple entries in your `Cargo.lock` file. Then when building the game you'll need to specify features within both of them.
+
+Your build command will look something like this.
+
+```sh
+cargo build --profile distribution -F tracing/release_max_level_off -F log/release_max_level_off
+```
+
+Generally the cost of each level of logging increases as you go from `error` to `trace`, so you might opt for keeping `error` logs as they're usually quite infrequent and often not in the "hot path". In that case you can switch from `release_max_level_off` to `release_max_level_error`.
 
 ## License
 
