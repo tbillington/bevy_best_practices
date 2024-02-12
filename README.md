@@ -347,6 +347,8 @@ Some of the build commands will require extra flags which can be annoying to typ
 
 The default Rust linker is often a significant portion of compile times. If you're using Bevys `dynamic_linking` described in the Development section this shouldn't be a big deal, however much faster linkers exist that you can experiment with such as LLD or mold. They are mentioned in the Bevy [getting started guide](https://bevyengine.org/learn/quick-start/getting-started/setup/#enable-fast-compiles-optional).
 
+TODO: Look into CPU features cross referenced with steam cpu feature support. See "Other Settings" at the bottom of [Steam Hardware Survey](https://store.steampowered.com/hwsurvey/Steam-Hardware-Software-Survey-Welcome-to-Steam).
+
 ### Development
 
 Here are the settings I use for the fastest iteration build times. If you require more performance in debug mode you can try the suggestions in the code snippet. I've generally found going above `opt-level = 2` doesn't give a meaningful increase for the compile time cost.
