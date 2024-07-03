@@ -285,6 +285,8 @@ Bevy [Plugins](https://docs.rs/bevy/latest/bevy/app/trait.Plugin.html) enable gr
 
 By constructing your game out of plugins you make it easier to find, work with, and debug subsystems. It also contextualises the setup and configuration of 3rd party crates to where they belong. For example, setting up the resources, plugins, and systems to utilise a 3rd party terrain library would go in your `TerrainPlugin`. That way, disabling your own terrain plugin will also disable the library you've imported, and any other resources that only it needed.
 
+Note that while internal plugins and binaries use a simple function as a plugin, library authors are expected to expose a struct implementing `Plugin` instead. The reason is that this way, authors can add internal state like configuration to the plugin in the future without breaking changes.
+
 > **Note**
 > 
 > Your mileage may vary with "enabling"/"disabling" plugins in your game. Bevy implements it in engine because it's valuable to disable chunks of the engine. However to achieve this in the game itself is not only more difficult, but the payoff is lower. How often will you realistically want to remove physics or audio from your game?
@@ -292,39 +294,31 @@ By constructing your game out of plugins you make it easier to find, work with, 
 
 `src/audio.rs`
 ```rust
-pub(crate) struct AudioPlugin;
-impl Plugin for AudioPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(some_audio_library::AudioFXPlugin)
-            .init_resource::<MyAudioSettings>()
-            .add_systems(...);
+pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(some_audio_library::AudioFXPlugin)
+        .init_resource::<MyAudioSettings>()
+        .add_systems(...);
     }
 }
 ```
 
 `src/physics.rs`
 ```rust
-pub(crate) struct PhysicsPlugin;
-impl Plugin for PhysicsPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(some_physics_library::BouncyPhysicsPlugin)
-            .init_resource::<MyPhysicsSettings>()
-            .add_systems(...);
-    }
+pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(some_physics_library::BouncyPhysicsPlugin)
+        .init_resource::<MyPhysicsSettings>()
+        .add_systems(...);
 }
 ```
 
 `src/game.rs`
 ```rust
-pub(crate) struct GamePlugin;
-impl Plugin for GamePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins((
-          DefaultPlugins,
-          crate::AudioPlugin,
-          crate::PhysicsPlugin,
-        ));
-    }
+pub(super) fn plugin(app: &mut App) {
+    app.add_plugins((
+      DefaultPlugins,
+      crate::audio::plugin,
+      crate::physics::plugin,
+    ));
 }
 ```
 
@@ -332,7 +326,7 @@ impl Plugin for GamePlugin {
 ```rust
 fn main() {
     bevy::prelude::App::new()
-        .add_plugins(crate::game::GamePlugin)
+        .add_plugins(crate::game::plugin)
         .run();
 }
 ```
