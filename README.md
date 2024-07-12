@@ -56,7 +56,25 @@ enum GameState {
     SettingsMenu,
     InGame,
 }
->
+
+fn spawn_player(mut commands: Commands) {
+    commands.spawn((
+        Name::new("Player"),
+        StateScoped(GameState::InGame),
+        ...
+    ));
+}
+
+app.init_state::<GameState>();
+app.enable_state_scoped_entities::<GameState>();
+```
+
+You can read more about the cleanup pattern I'm using in the [bevy cheatbook](https://bevy-cheatbook.github.io/patterns/generic-systems.html).
+
+### Strong IDs
+
+For things in your game that should persist between saving/loading, and networking, use your own ID type over `Entity`.
+
 `Entity` is more akin to a pointer, it is not to be relied upon for referencing something across sessions or over the network.
 
 Here is an example of making a strong ID type for quests.
