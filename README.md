@@ -1,8 +1,6 @@
 # Bevy Best Practices
 
-An opionated set of convensions I stick to in my [Bevy](https://bevyengine.org/) projects.
-
-Up to date as of Bevy 0.11.
+An opionated set of convensions for [Bevy](https://bevyengine.org/) projects.
 
 ## Table of Contents
 - [Entities](#entities)
@@ -32,7 +30,7 @@ Up to date as of Bevy 0.11.
 
 ### Name and Cleanup
 
-All entities must be spawned with a `Name` and cleanup component at the front of the bundle.
+All top-level entities must be spawned with a `Name` and cleanup component at the front of the bundle. It's expected that child entities don't need a cleanup component as it will be handled by the parent.
 
 Names assist with debugging. Cleanup components indicate to which state the entity belongs, and to remove it upon exit of that state.
 
@@ -47,7 +45,81 @@ commands
     ))
 ```
 
+As of bevy 0.14 you can now use [`StateScoped`](https://docs.rs/bevy/0.14.0/bevy/state/state_scoped/struct.StateScoped.html) components which fulfill a similar role.
+
+```rust
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default, States)]
+enum GameState {
+    #[default]
+    MainMenu,
+    SettingsMenu,
+    InGame,
+}
+
+
+fn spawn_player(mut commands: Commands) {
+    commands.spawn((
+        Name::new("Player"),
+        StateScoped(GameState::InGame),
+        ...
+    ));
+}
+
+
+app.init_state::<GameState>();
+app.enable_state_scoped_entities::<GameState>();
+```
+
 You can read more about the cleanup pattern I'm using in the [bevy cheatbook](https://bevy-cheatbook.github.io/patterns/generic-systems.html).
+
+### Strong IDs
+
+For things in your game that should persist between saving/loading, and networking, use your own ID type over `Entity`.
+
+`Entity` is more akin to a pointer, it is not to be relied upon for referencing something across sessions or over the network.
+
+Here is an example of making a strong ID type for quests.
+
+Keeping the quest generator resource and the actual `u32` value of the `QuestId` private to the module means quest ids can only be generated in one place, which helps with simplicity and debugging.
+
+```rust
+fn my_sys(mut qgs: ResMut<QuestGlobalState>, mut cmd: Commands) {
+    let quest_id = qgs.quest_id();
+    cmd.spawn(
+        ...
+        MyQuest {
+            id: quest_id
+        },
+    );
+}
+
+#[derive(Reflect, Debug, PartialEq, Eq, Clone, Copy)]
+pub(crate) struct QuestId(u32);
+
+impl std::fmt::Display for QuestId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("q_")?;
+        self.0.fmt(f)
+    }
+}
+
+#[derive(Resource, Debug)]
+struct QuestGlobalState {
+    next_quest_id: u32,
+}
+
+impl QuestGlobalState {
+    fn new() -> Self {
+        Self { next_quest_id: 0 }
+    }
+
+    fn quest_id(&mut self) -> QuestId {
+        let id = self.next_quest_id;
+        self.next_quest_id += 1;
+        QuestId(id)
+    }
+}
+```
 
 ## System Scheduling
 
