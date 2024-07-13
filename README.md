@@ -444,6 +444,25 @@ We disable certain debug information as it increases compile & link times. We ar
 
 You'll also want to be using Bevy's [`dynamic_linking` feature](https://bevyengine.org/learn/quick-start/getting-started/setup/#enable-fast-compiles-optional) eg `cargo run -F bevy/dynamic_linking`. Dynamic linking allows us to avoid paying the cost of linking all of Bevy and it's dependencies every time we compile.
 
+#### Dynamic linking only during dev
+
+In order to avoid having the `bevy/dynamic_linking` feature on by default, first create a `dev` feature in your own `Cargo.toml`. You can also put any other features or dependencies you want during development, I've included a few as examples.
+
+```toml
+[features]
+dev = ["bevy/dynamic_linking", "bevy/file_watcher", "bevy/asset_processor"]
+```
+
+Then, to run your project during development:
+
+```sh
+cargo run --features dev
+```
+
+This will mean when performing a release or distribution build you avoid accidentally using any development features or bevys dynamic linking.
+
+I use [`just`](https://github.com/casey/just) as a command runner to simplify my build commands and keep configuration in a file so I don't have to remember what to type every time.
+
 ### Release
 
 Our release profile doesn't look much different. `release` comes with `opt-level = 3` by default but we'll specify it for clarity. We'll continue with removing debug info as we did in `dev`.
