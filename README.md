@@ -126,7 +126,7 @@ impl QuestGlobalState {
 
 All systems added to the `Update` schedule should be bound by run conditions on `State` and `SystemSet`.
 
-Run states enables easy enabling/disbling of groups of behaviour & reduces systems running when they don't need to.
+Run states enables easy enabling/disabling of groups of behaviour & reduces systems running when they don't need to.
 
 For example, changing `PlayingState` to `PlayingState::Paused` will automatically disable all systems that progress the game and enable systems handle actions related to the pause menu.
 
