@@ -6,7 +6,7 @@ An opionated set of convensions for [Bevy](https://bevyengine.org/) projects.
 - [Entities](#entities)
   - [Name and Cleanup](#name-and-cleanup)
   - [Strong IDs](#strong-ids)
-- [System Schenduling](#system-scheduling)
+- [System Scheduling](#system-scheduling)
   - [Update systems should be bounded](#update-systems-should-be-bounded)
   - [Co-locate system registration for the same `State`](#co-locate-system-registration-for-the-same-state)
 - [Events](#events)
