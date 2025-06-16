@@ -1,6 +1,6 @@
 # Bevy Best Practices
 
-An opionated set of convensions for [Bevy](https://bevyengine.org/) projects.
+An opionated set of conventions for [Bevy](https://bevy.org/) projects.
 
 ## Table of Contents
 - [Entities](#entities)
